@@ -27,7 +27,7 @@ namespace tylerbutler
 
         [FunctionName("issues")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "{acct}/{repo}/issues")]
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "{acct}/{repo}/issues")]
             HttpRequest req,
             string acct,
             string repo,
