@@ -1,13 +1,17 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using HandlebarsDotNet;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.WebUtilities;
-using System.Text.RegularExpressions;
-using System.Collections.Generic;
 using Microsoft.Extensions.Primitives;
 
 namespace tylerbutler
@@ -32,7 +36,8 @@ namespace tylerbutler
             HttpRequest req,
             string acct,
             string repo,
-            ILogger log)
+            ILogger log,
+            ExecutionContext context)
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
             repo = string.Join('/', acct, repo);
@@ -71,10 +76,27 @@ namespace tylerbutler
 
             if (!autoRedir)
             {
-                return (ActionResult)new OkObjectResult($"Parsed date: {dateString}\nRedirect to {redirUrl}");
+                var parameters = req.Query.Keys.ToDictionary(k => k, v => req.Query[v].ToString());
+                parameters["auto"] = "1";
+                string bookmarkLink = QueryHelpers.AddQueryString(new Uri(req.GetDisplayUrl()).GetLeftPart(UriPartial.Path), parameters);
+
+                var templatePath = Path.Combine(context.FunctionAppDirectory, "template.handlebars");
+                var template = Handlebars.Compile(File.ReadAllText(templatePath));
+                var resultText = template(new Dictionary<string, string>()
+                {
+                    {"dateString", dateString },
+                    {"redirUrl", redirUrl },
+                    {"bookmarkLink", bookmarkLink }
+                });
+
+                var toReturn = new ContentResult();
+                toReturn.Content = resultText;
+                toReturn.ContentType = "text/html; charset=utf-8";
+                toReturn.StatusCode = StatusCodes.Status200OK;
+                return toReturn;
             }
 
-            return (ActionResult)new RedirectResult(redirUrl, /* permanent */ false);
+            return new RedirectResult(redirUrl, /* permanent */ false);
         }
 
         private async static Task<DateTime?> ParseDate(string dateString, ILogger log, IEnumerable<IDateParser> parsers)
@@ -84,6 +106,7 @@ namespace tylerbutler
                 var parsedDate = parser.ParseDate(dateString, log);
                 if (parsedDate != null)
                 {
+                    log.LogInformation($"Using date {parsedDate} from {parser.GetType().ToString()}");
                     return parsedDate;
                 }
                 else

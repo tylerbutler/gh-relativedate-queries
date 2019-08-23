@@ -5,15 +5,19 @@
     <RootNamespace>gh_issues</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Chronic" Version="0.3.2" />
+    <PackageReference Include="Handlebars.Net" Version="1.10.1" />
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="1.0.29" />
     <PackageReference Include="Microsoft.Recognizers.Text.DateTime" Version="1.2.6" />
-    <PackageReference Include="Chronic" Version="0.3.2" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="proxies.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="template.handlebars">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="local.settings.json">
