@@ -12,14 +12,14 @@ namespace tylerbutler
     {
         [FunctionName("LetsEncrypt")]
         public static async Task<HttpResponseMessage> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "letsencrypt/{code}")]
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "letsencrypt/{rest}")]
             HttpRequestMessage req,
-            string code,
+            string rest,
             ILogger log)
         {
-            log.LogInformation($"C# HTTP trigger function processed a request. {code}");
+            log.LogInformation($"C# HTTP trigger function processed a request. {rest}");
 
-            var content = File.ReadAllText($@"D:\home\site\wwwroot\.well-known\acme-challenge\{code}");
+            var content = File.ReadAllText($@"D:\home\site\letsencrypt\.well-known\acme-challenge\{rest}");
             var resp = new HttpResponseMessage(HttpStatusCode.OK);
             resp.Content = new StringContent(content, System.Text.Encoding.UTF8, "text/plain");
             return resp;

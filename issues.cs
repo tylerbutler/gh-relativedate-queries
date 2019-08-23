@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using Microsoft.Extensions.Primitives;
 
 namespace tylerbutler
 {
@@ -34,11 +35,6 @@ namespace tylerbutler
             ILogger log)
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
-            // Regex exp = new Regex(@"(?<before>.*?)created:(?<operator>[<=>]{1,2})(?<created>.+)(?<after>[\s\+]?.*)");
-            // Regex exp = new Regex("creted: ");
-
-            // https://github.com/Microsoft/prague/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+created%3A%3E2019-08-01
-            // http://localhost:7071/microsoft/prague/issues?q=is%3Aissue+is%3Aopen+created%3A%3Etoday-7
             repo = string.Join('/', acct, repo);
             if (string.IsNullOrEmpty(repo))
             {
@@ -65,12 +61,20 @@ namespace tylerbutler
             }
             string dateString = date.Value.ToString("yyyy-MM-dd");
 
-            // string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            // var d = DateTime.Parse((results[0].Resolution["values"] as Dictionary<string, string>).ToString());
             string urlBase = $"https://github.com/{repo}/issues";
             string query = $"{match.Groups["before"]}created:{match.Groups["operator"]}{dateString}{match.Groups["after"]}";
             string redirUrl = QueryHelpers.AddQueryString(urlBase, "q", query);
-            return (ActionResult)new OkObjectResult($"Parsed date: {dateString}\n\nRedirect to {redirUrl}");
+
+            StringValues stringValues;
+            bool autoRedir = req.Query.TryGetValue("auto", out stringValues);
+            autoRedir = autoRedir && stringValues.ToArray()[0] == "1";
+
+            if (!autoRedir)
+            {
+                return (ActionResult)new OkObjectResult($"Parsed date: {dateString}\nRedirect to {redirUrl}");
+            }
+
+            return (ActionResult)new RedirectResult(redirUrl, /* permanent */ false);
         }
 
         private async static Task<DateTime?> ParseDate(string dateString, ILogger log, IEnumerable<IDateParser> parsers)

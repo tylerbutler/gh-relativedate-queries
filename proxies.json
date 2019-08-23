@@ -6,7 +6,7 @@
                 "route": "/.well-known/acme-challenge/{*rest}"
             },
             "backendUri": "https://%WEBSITE_HOSTNAME%/letsencrypt/{rest}",
-            "debug": true,
-        },
+            "debug": true
+        }
     }
 }

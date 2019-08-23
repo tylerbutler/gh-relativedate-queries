@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Recognizers.Text;
 using Microsoft.Recognizers.Text.DateTime;
@@ -15,21 +14,19 @@ namespace tylerbutler
 
             if (model.Count != 1)
             {
-                return null; // new BadRequestObjectResult($"parsed {model.Count} dates, expected 1");
+                return null;
             }
 
-            // DateTime dateTime;
             var d = (model["values"] as List<Dictionary<string, string>>)[0];
             if (d["type"] == "daterange")
             {
-                return DateTime.Parse(d["start"]); // $"{d["start"]}..{d["end"]}";
+                return DateTime.Parse(d["start"]);
             }
 
             if (d.ContainsKey("value"))
             {
                 return DateTime.Parse(d["value"]);
             }
-
             return null;
         }
     }
